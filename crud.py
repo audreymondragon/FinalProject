@@ -9,10 +9,10 @@ def create_user(username, email, password):
     return user
 
 
-def create_preference(cuisine_type, min_yelp_rating, min_yelp_price, max_distance):
+def create_preference(user, cuisine_type, min_yelp_rating, min_yelp_price, max_distance):
     """Create and return a user's preferences"""
 
-    preference = Preference(cuisine_type=cuisine_type, min_yelp_rating=min_yelp_rating, min_yelp_price=min_yelp_price, max_distance=max_distance)
+    preference = Preference(user=user, cuisine_type=cuisine_type, min_yelp_rating=min_yelp_rating, min_yelp_price=min_yelp_price, max_distance=max_distance)
 
     return preference
 
@@ -24,12 +24,19 @@ def create_restaurant(restaurant_name, yelp_rating, yelp_price, location):
 
     return restaurant
 
-def create_visited(visited, wishlist, location, yelp_api_restaurant_id):
+def create_visited(user, restaurant, visited, wishlist, location, yelp_api_restaurant_id):
     """Create and return a user's visited restaurants"""
 
-    visited = Visited(visited=visited, wishlist=wishlist, location=location, yelp_api_restaurant_id=yelp_api_restaurant_id)
+    visited = Visited(user=user, restaurant=restaurant, visited=visited, wishlist=wishlist, location=location, yelp_api_restaurant_id=yelp_api_restaurant_id)
 
     return visited
+
+def create_favorite(user, restaurant):
+    """Create and return a user's favorite restaurants"""
+
+    favorite = Favorite(user=user, restaurant=restaurant)
+
+    return favorite
     
 if __name__ == '__main__':
     from server import app
