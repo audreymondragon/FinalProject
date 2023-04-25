@@ -53,7 +53,7 @@ class Restaurant(db.Model):
     visited_by = db.relationship("Visited", back_populates="restaurant")
     users = db.relationship("User", secondary="fav_restaurants", back_populates="favorites")
     # 1 visit will be 1 restaurant
-    #1 user will have many fav restaurants
+    # 1 user will have many fav restaurants
 
     def __repr__(self):
         return f'<Restaurant restaurant_id={self.preference_id} restaurant_name={self.restaurant_name}>'
@@ -91,7 +91,7 @@ class Favorite(db.Model):
 
 
 
-def connect_to_db(flask_app, db_uri="postgresql:///ratings", echo=True):
+def connect_to_db(flask_app, db_uri="postgresql:///restaurants", echo=True):
     flask_app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
     flask_app.config["SQLALCHEMY_ECHO"] = echo
     flask_app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
