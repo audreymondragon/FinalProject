@@ -1,8 +1,10 @@
 """Server for movie ratings app."""
-
 from flask import (Flask, render_template, request, flash, session, redirect)
+import requests
 from model import connect_to_db, db
 import crud
+import os
+
 #from yelpapi import YelpAPI
 
 from jinja2 import StrictUndefined
@@ -76,23 +78,21 @@ def login_process():
 @app.route('/preferences', methods=['GET'])
 def preferences():
     """Displays the page to enter user preferences in the form"""
-
-    url = 'https://api.yelp.com/v3/businesses/search'
+    
+    url = "https://api.yelp.com/v3/businesses/search?location=Los%20Angeles&term=restaurants&price=1&price=2&price=3&price=4&sort_by=best_match&limit=50"
     headers = {
-        'accept': 'application/json',
-        'Authorization': 'API_KEY'
+        "accept": "application/json",
+        "Authorization": "Bearer " + os.environ[API_KEY]
     }
 
-    response = requests.get(url, headers=headers)
-    categories = json.loads(response.text)['categories']
-
+    res = requests.get(url, headers=headers)
+    json_data = res.json()
+    print(json_data)
     cuisines = []
 
-    for category in categories:
-        if category['alias'] == 'restaurants':
-            for subcategory in category['subcategories']:
-                cuisines.append(subcategory['title'])
-                return cuisines
+    for business in json_data['businesses']:
+        for category in business['categories']:
+            cuisines.append(category['title'])
 
     return render_template('preferences_form.html', cuisines=cuisines)
 
