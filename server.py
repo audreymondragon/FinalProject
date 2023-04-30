@@ -1,15 +1,19 @@
 """Server for movie ratings app."""
 
-from flask import (Flask, render_template, request, flash, session,
-                   redirect)
-from model import connect_to_db, db, User, Preference, Restaurant, Visited, Favorite
+from flask import (Flask, render_template, request, flash, session, redirect)
+from model import connect_to_db, db
 import crud
+#from yelpapi import YelpAPI
 
 from jinja2 import StrictUndefined
 
 app = Flask(__name__)
-app.secret_key = "dev"
+app.secret_key = 'dev'
 app.jinja_env.undefined = StrictUndefined
+
+API_KEY = 'YELP_API_KEY'
+#google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
+#cuisine_types = ['Italian', 'Mexican', 'Chinese']
 
 @app.route('/')
 def homepage():
@@ -18,23 +22,23 @@ def homepage():
     return render_template('homepage.html')
 
 
-@app.route('/create_account', methods=['GET', 'POST'])
+@app.route('/create_account', methods=['POST'])
 def new_account():
     """Create a new account."""
 
-    if request.method =='POST':
+    # if request.method =='POST':
         # gets the form variables
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
+    username = request.form.get('username')
+    email = request.form.get('email')
+    password = request.form.get('password')
 
-        # if user already exists
-        user = crud.get_user_by_email(email)
+    # if user already exists
+    user = crud.get_user_by_email(email)
 
-        if user:
-            flash('That email is already in use, please try again.')
-            return redirect('/create_account')
-
+    if user:
+        flash('That email is already in use, please try again.')
+        return redirect('/create_account')
+    else:
         # create and add new user to db
         user = crud.create_user(username, email, password)
         
@@ -44,15 +48,13 @@ def new_account():
         flash('Account created successfully! Please log in.')
         return redirect('/login')
     
-    return render_template('create_account.html')
+    #return render_template('create_account.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login_process():
     """Process the user login"""
     if request.method == 'POST':
-        #QUESTION: should I remove the username?
-        username = request.form.get("username")
         email = request.form.get("email")
         password = request.form.get("password")
 
@@ -64,7 +66,8 @@ def login_process():
         else:
             session["user_email"] = user.email
             flash(f"Welcome, {user.email}!")
-
+            # think about adding adding username, user_id to the session object here to access everywhere
+            #when logging a user out, must also take out all, not just 1
             return redirect('/preferences')
 
     return render_template('login.html')
@@ -74,36 +77,120 @@ def login_process():
 def preferences():
     """Displays the page to enter user preferences in the form"""
 
-    return render_template('preferences_form.html')
+    url = 'https://api.yelp.com/v3/businesses/search'
+    headers = {
+        'accept': 'application/json',
+        'Authorization': 'API_KEY'
+    }
+
+    response = requests.get(url, headers=headers)
+    categories = json.loads(response.text)['categories']
+
+    cuisines = []
+
+    for category in categories:
+        if category['alias'] == 'restaurants':
+            for subcategory in category['subcategories']:
+                cuisines.append(subcategory['title'])
+                return cuisines
+
+    return render_template('preferences_form.html', cuisines=cuisines)
 
 @app.route('/preferences', methods=['POST'])
 def preferences_form():
     """Process the user's preferences from the form"""
+    
     # Get user's preferences from form
-    # QUESTION: do these need "preference." before them to be an attribute of the instance of the Preference class?
     cuisine_type = request.form.get('cuisine_type')
     min_yelp_rating = request.form.get('min_yelp_rating')
     min_yelp_price = request.form.get('min_yelp_price')
     max_distance = request.form.get('max_distance')
 
+    # need to create an instance when they submit the form, then add that instance to the db then commit
+    preference = Preference(cuisine_type=cuisine_type,
+                            min_yelp_rating=min_yelp_rating,
+                            min_yelp_price=min_yelp_price,
+                            max_distance=max_distance)
+    
+    db.session.add(preference)
     db.session.commit()
 
     flash ('Preferences submitted successfully!')
-    return redirect('/recommendations')
+    #return redirect('/recommendations')
+
+    return render_template('preferences_form.html', preference=preference)
 
 @app.route('/recommendations')
 def restaurant_recommendations():
     """Displays recommendations based on the user's preferences"""
 
-    # get user's preferences
-    preference = crud.get_preference_by_id(preference_id)
+    cuisine_type = request.args.get('title', '')
+    min_yelp_rating = request.args.get('rating', '')
+    min_yelp_price = request.args.get('price', '')
+    max_distance = request.args.get('location', '')
 
-    # code here to call Yelp API
+    url = 'https://api.yelp.com/v3/businesses/search'
+    payload = {'apikey': API_KEY,
+               'title': cuisine_type,
+               'rating': min_yelp_rating,
+               'price': min_yelp_price,
+               'location': max_distance}
+    
+    response = requests.get(url, params=payload)
+    data = response.json()
 
-    # code here to call Google Maps API
+    if '_embedded' in data:
+        recommendations = data['_embedded']['recommendations']
+    else:
+        recommendations = []
 
-    # code here to combine the 2?
-    return render_template('recommendations.html')
+    return render_template('recommendations.html',
+                           pformat=pformat,
+                           data=data,
+                           results=recommendations)
+    #if request.method == 'POST':
+        # get user's preferences
+        #preference = crud.get_preferences()
+
+    #     url = "https://api.yelp.com/v3/businesses/search"
+    #     # define parameters for Yelp Fusion API call
+    #     headers = {
+    #         'accept': 'application/json',
+    #         'Authorization': 'API_KEY',
+    #     }
+    #     params = {
+    #         'term': preference.cuisine_type,
+    #         'price': preference.min_yelp_price + ',' + '4', # filter by min price and up to $$$$ (4 $ signs)
+    #         'rating': preference.min_yelp_rating,
+    #         'categories': 'restaurants', # only show results in the restaurants category
+    # #     }
+
+    #     # make GET request to Yelp Fusion API endpoint
+    #     response = requests.get(url, headers=headers, params=params)
+
+    #     # parse response data to extract relevant restaurant information
+    #     data = json.loads(response.text)
+    #     businesses = data.get('businesses', [])
+    #     recommendations = []
+
+    #     for business in businesses:
+    #         name = business.get('name')
+    #         rating = business.get('rating')
+    #         price = business.get('price')
+    #         categories = ', '.join([category.get('title') for category in business.get('categories', [])])
+    #         address = ', '.join(business.get('location', {}).get('display_address', []))
+    #         recommendation = {
+    #             'name': name,
+    #             'rating': rating,
+    #             'price': price,
+    #             'categories': categories,
+    #             'address': address,
+    #         }
+    #         recommendations.append(recommendation)
+
+    #     return render_template('recommendations.html', recommendations=recommendations)
+
+    # return render_template('preferences_form.html')
 
 if __name__ == "__main__":
     connect_to_db(app)

@@ -4,11 +4,9 @@ from model import db, User, Preference, Restaurant, Visited, Favorite, connect_t
 def create_user(username, email, password):
     """Create and return a new user"""
 
-    print(f'Creating user: {username}, {email}, {password}')
     user = User(username=username, email=email, password=password)
-    db.session.add(user)
-    db.session.commit()
-    print(f"Created user with ID: {user.user_id}")
+    # db.session.add(user)
+    # db.session.commit()
 
     return user
 
