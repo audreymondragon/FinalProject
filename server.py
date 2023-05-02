@@ -5,15 +5,13 @@ from model import connect_to_db, db
 import crud
 import os
 
-#from yelpapi import YelpAPI
-
 from jinja2 import StrictUndefined
 
 app = Flask(__name__)
 app.secret_key = 'dev'
 app.jinja_env.undefined = StrictUndefined
 
-API_KEY = 'YELP_API_KEY'
+API_KEY = os.environ['YELP_API_KEY']
 #google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
 #cuisine_types = ['Italian', 'Mexican', 'Chinese']
 
@@ -79,22 +77,41 @@ def login_process():
 def preferences():
     """Displays the page to enter user preferences in the form"""
     
+    #url = "https://api.yelp.com/v3/businesses/search"
     url = "https://api.yelp.com/v3/businesses/search?location=Los%20Angeles&term=restaurants&price=1&price=2&price=3&price=4&sort_by=best_match&limit=50"
     headers = {
         "accept": "application/json",
-        "Authorization": "Bearer " + os.environ[API_KEY]
+        "Authorization": f"Bearer {API_KEY}"
     }
 
     res = requests.get(url, headers=headers)
     json_data = res.json()
     print(json_data)
     cuisines = []
+    cuisines_set = set()
 
     for business in json_data['businesses']:
         for category in business['categories']:
-            cuisines.append(category['title'])
+            cuisine = category.get('title')
+            if cuisine and cuisine not in cuisines_set:
+                cuisines.append(cuisine)
+                cuisines_set.add(cuisine)
 
-    return render_template('preferences_form.html', cuisines=cuisines)
+    ratings = []
+    for business in json_data['businesses']:
+        rating = business['rating']
+        if rating not in ratings:
+            ratings.append(rating)
+
+    prices = []
+    for business in json_data['businesses']:
+        price = business['price']
+        if price not in prices:
+            prices.append(price)
+
+    
+
+    return render_template('preferences_form.html', cuisines=cuisines, ratings=ratings, prices=prices)
 
 @app.route('/preferences', methods=['POST'])
 def preferences_form():
@@ -129,25 +146,25 @@ def restaurant_recommendations():
     min_yelp_price = request.args.get('price', '')
     max_distance = request.args.get('location', '')
 
-    url = 'https://api.yelp.com/v3/businesses/search'
-    payload = {'apikey': API_KEY,
-               'title': cuisine_type,
-               'rating': min_yelp_rating,
-               'price': min_yelp_price,
-               'location': max_distance}
+    # url = 'https://api.yelp.com/v3/businesses/search'
+    # payload = {'apikey': API_KEY,
+    #            'title': cuisine_type,
+    #            'rating': min_yelp_rating,
+    #            'price': min_yelp_price,
+    #            'location': max_distance}
     
-    response = requests.get(url, params=payload)
-    data = response.json()
+    # response = requests.get(url, params=payload)
+    # data = response.json()
 
-    if '_embedded' in data:
-        recommendations = data['_embedded']['recommendations']
-    else:
-        recommendations = []
+    # if '_embedded' in data:
+    #     recommendations = data['_embedded']['recommendations']
+    # else:
+    #     recommendations = []
 
-    return render_template('recommendations.html',
-                           pformat=pformat,
-                           data=data,
-                           results=recommendations)
+    # return render_template('recommendations.html',
+    #                        pformat=pformat,
+    #                        data=data,
+    #                        results=recommendations)
     #if request.method == 'POST':
         # get user's preferences
         #preference = crud.get_preferences()
