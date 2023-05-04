@@ -30,9 +30,10 @@ class Preference(db.Model):
     preference_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"))
     cuisine_type = db.Column(db.String)
-    min_yelp_rating = db.Column(db.Integer)
-    min_yelp_price = db.Column(db.Integer)
+    min_yelp_rating = db.Column(db.Float)
+    min_yelp_price = db.Column(db.String)
     max_distance = db.Column(db.Integer)
+    zipcode = db.Column(db.Integer)
 
     user = db.relationship("User", back_populates="preferences")
 

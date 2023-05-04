@@ -26,10 +26,10 @@ def get_user_by_email(email):
     return User.query.filter(User.email == email).first()
 
 
-def create_preference(user, cuisine_type, min_yelp_rating, min_yelp_price, max_distance):
+def create_preference(user, cuisine_type, min_yelp_rating, min_yelp_price, max_distance, zipcode):
     """Create and return a user's preferences"""
 
-    preference = Preference(user=user, cuisine_type=cuisine_type, min_yelp_rating=min_yelp_rating, min_yelp_price=min_yelp_price, max_distance=max_distance)
+    preference = Preference(user=user, cuisine_type=cuisine_type, min_yelp_rating=min_yelp_rating, min_yelp_price=min_yelp_price, max_distance=max_distance, zipcode=zipcode)
 
     return preference
 
@@ -43,7 +43,10 @@ def get_preference_by_id(preference_id):
 
     return Preference.query.get(preference_id)
 
+def get_preference_by_user(user_id):
+    """Return a preference by user id"""
 
+    return Preference.query.get(user_id)
 
 def create_restaurant(restaurant_name, yelp_rating, yelp_price, location):
     """Create and return a user's restaurants"""
@@ -83,10 +86,10 @@ def get_visited_by_id():
 
 
 
-def create_favorite(user, restaurant):
+def create_favorite(user_id, restaurant_id):
     """Create and return a user's favorite restaurants"""
 
-    favorite = Favorite(user=user, restaurant=restaurant)
+    favorite = Favorite(user_id=user_id, restaurant_id=restaurant_id)
 
     return favorite
 
