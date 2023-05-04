@@ -29,11 +29,13 @@ class Preference(db.Model):
 
     preference_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"))
+    search_location = db.Column(db.String)
+    search_term = db.Column(db.String)
+    radius = db.Column(db.Integer)
     cuisine_type = db.Column(db.String)
-    min_yelp_rating = db.Column(db.Float)
-    min_yelp_price = db.Column(db.String)
-    max_distance = db.Column(db.Integer)
-    zipcode = db.Column(db.Integer)
+    min_yelp_price = db.Column(db.Integer)
+    sort_by = db.Column(db.String)
+    num_results = db.Column(db.Integer)
 
     user = db.relationship("User", back_populates="preferences")
 
