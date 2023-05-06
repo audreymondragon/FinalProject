@@ -46,7 +46,8 @@ def get_preference_by_id(preference_id):
 def get_preference_by_user(user_id):
     """Return a preference by user id"""
 
-    return Preference.query.get(user_id)
+    # return Preference.query.get(user_id)
+    return Preference.query.filter_by(user_id=user_id)
 
 def create_restaurant(restaurant_name, yelp_rating, yelp_price, location):
     """Create and return a user's restaurants"""

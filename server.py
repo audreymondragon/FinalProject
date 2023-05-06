@@ -13,6 +13,7 @@ app.jinja_env.undefined = StrictUndefined
 
 API_KEY = os.environ['YELP_API_KEY']
 #google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
+cuisines = ["Afghan",  "African",  "American (New)",  "American (Traditional)",  "Andalusian",  "Arabian",  "Argentine",  "Armenian",  "Asian Fusion",  "Asturian",  "Australian",  "Austrian",  "Baguettes",  "Bangladeshi",  "Barbeque",  "Basque",  "Bavarian",  "Beer Garden",  "Beer Hall",  "Beisl",  "Belgian",  "Bistros",  "Black Sea",  "Brasseries",  "Brazilian",  "Breakfast & Brunch",  "British",  "Buffets",  "Bulgarian",  "Burgers",  "Burmese",  "Cafes",  "Cafeteria",  "Cajun/Creole",  "Cambodian",  "Canadian (New)",  "Canteen",  "Caribbean",  "Dominican",  "Haitian",  "Puerto Rican",  "Trinidadian",  "Catalan",  "Cheesesteaks",  "Chicken Shop",  "Chicken Wings",  "Chilean",  "Chinese",  "Comfort Food",  "Corsican",  "Creperies",  "Cuban",  "Curry Sausage",  "Cypriot",  "Czech",  "Czech/Slovakian",  "Danish",  "Delis",  "Diners",  "Dinner Theater",  "Dumplings",  "Eastern European",  "Eritrean",  "Ethiopian",  "Fast Food",  "Filipino",  "Fischbroetchen",  "Fish & Chips",  "Flatbread",  "Fondue",  "Food Court",  "Food Stands",  "Freiduria",  "French",  "Galician",  "Game Meat",  "Gastropubs",  "Georgian",  "German",  "Giblets",  "Gluten-Free",  "Greek",  "Guamanian",  "Halal",  "Hawaiian",  "Heuriger",  "Himalayan/Nepalese",  "Honduran",  "Hong Kong Style Cafe",  "Hot Dogs",  "Hot Pot",  "Hungarian",  "Iberian",  "Indian",  "Indonesian",  "International",  "Irish",  "Island Pub",  "Israeli",  "Italian",  "Japanese",  "Donburi",  "Gyudon",  "Oyakodon",  "Hand Rolls",  "Horumon",  "Izakaya",  "Japanese Curry",  "Kaiseki",  "Kushikatsu",  "Oden",  "Okinawan",  "Okonomiyaki",  "Onigiri",  "Ramen",  "Robatayaki",  "Soba",  "Sukiyaki",  "Takoyaki",  "Tempura",  "Teppanyaki",  "Tonkatsu",  "Udon",  "Unagi",  "Western Style Japanese Food",  "Yakiniku",  "Yakitori",  "Jewish",  "Kebab",  "Kopitiam",  "Korean",  "Kosher",  "Kurdish",  "Laos",  "Laotian",  "Latin American",  "Colombian",  "Salvadoran",  "Venezuelan",  "Live/Raw Food",  "Lyonnais",  "Malaysian",  "Mamak",  "Nyonya",  "Meatballs",  "Mediterranean",  "Falafel",  "Mexican",  "Eastern Mexican",  "Jaliscan",  "Northern Mexican",  "Oaxacan",  "Pueblan",  "Tacos",  "Tamales",  "Yucatan",  "Middle Eastern",  "Egyptian",  "Lebanese",  "Milk Bars",  "Modern Australian",  "Modern European",  "Mongolian",  "Moroccan",  "New Mexican Cuisine",  "New Zealand",  "Nicaraguan",  "Night Food",  "Nikkei",  "Noodles",  "Norcinerie",  "Open Sandwiches",  "Oriental",  "Pakistani",  "Pan Asian",  "Parent Cafes",  "Parma",  "Persian/Iranian",  "Peruvian",  "PF/Comercial",  "Pita",  "Pizza",  "Polish",  "Pierogis",  "Polynesian",  "Pop-Up Restaurants",  "Portuguese",  "Potatoes",  "Poutineries",  "Pub Food",  "Rice",  "Romanian",  "Rotisserie Chicken",  "Russian",  "Salad",  "Sandwiches",  "Scandinavian",  "Schnitzel",  "Scottish",  "Seafood",  "Serbo Croatian",  "Signature Cuisine",  "Singaporean",  "Slovakian",  "Somali",  "Soul Food",  "Soup",  "Southern",  "Spanish",  "Sri Lankan",  "Steakhouses",  "Supper Clubs",  "Sushi Bars",  "Swabian",  "Swedish",  "Swiss Food",  "Syrian",  "Tabernas",  "Taiwanese",  "Tapas Bars",  "Tapas/Small Plates",  "Tavola Calda",  "Tex-Mex",  "Thai",  "Traditional Norwegian",  "Traditional Swedish",  "Trattorie",  "Turkish",  "Ukrainian",  "Uzbek",  "Vegan",  "Vegetarian",  "Venison",  "Vietnamese",  "Waffles",  "Wok",  "Wraps",  "Yugoslav"]
 
 @app.route('/')
 def homepage():
@@ -77,55 +78,8 @@ def login_process():
 @app.route('/preferences', methods=['GET'])
 def preferences():
     """Displays the page to enter user preferences in the form"""
-    
-    #url = "https://api.yelp.com/v3/businesses/search"
-    url = "https://api.yelp.com/v3/businesses/search?location=Los%20Angeles&term=restaurants&price=1&price=2&price=3&price=4&sort_by=best_match&limit=50"
-    headers = {
-        "accept": "application/json",
-        "Authorization": f"Bearer {API_KEY}"
-    }
-    #reformat this payload so that it forms the url query string
-    # payload = {'title': 'cuisine_type',
-    #            'rating': 'min_yelp_rating',
-    #            'price': 'min_yelp_price',
-    #            'zip_code': 'zipcode'}
-    # params = {}
 
-    # if request.method == 'GET':
-    #     params['title'] = request.args.get('title')
-    #     params['rating'] = request.args.get('rating')
-    #     params['price'] = request.args.get('price')
-    #     params['zip_code'] = request.args.get('zip_code')
-
-
-    res = requests.get(url, headers=headers)
-
-    json_data = res.json()
-    print(json_data)
-    cuisines = []
-    cuisines_set = set()
-
-    for business in json_data['businesses']:
-        for category in business['categories']:
-            cuisine = category.get('title')
-            if cuisine and cuisine not in cuisines_set:
-                cuisines.append(cuisine)
-                cuisines_set.add(cuisine)
-
-    ratings = []
-    for business in json_data['businesses']:
-        rating = business['rating']
-        if rating not in ratings:
-            ratings.append(rating)
-
-    prices = []
-    for business in json_data['businesses']:
-        price = business['price']
-        if price not in prices:
-            prices.append(price)
-
-    return render_template('preferences_form.html', cuisines=cuisines, ratings=ratings, prices=prices)
-
+    return render_template('preferences_form.html', cuisines=cuisines)
 
 
 @app.route('/preferences', methods=['POST'])
@@ -134,24 +88,49 @@ def preferences_form():
     #retrieve user object from session
     user_id = session['user_id']
     user = crud.get_user_by_id(user_id)
+    print(user_id)
+    print(user)
     #session["user_id"] = user.user_id
+
+    url = "https://api.yelp.com/v3/businesses/search?"
+    headers = {
+        "accept": "application/json",
+        "Authorization": f"Bearer {API_KEY}"
+    }
+    print(request.args.get('search_location'))
+    #format this payload so that it forms the url query string
+    payload = {'location': request.form.get('search_location'),
+               'term': 'Restaurants',
+               'radius': request.form.get('radius'),
+               'categories': request.form.get('cuisine_type'),
+               'price': request.form.get('min_yelp_price'),
+               'sort_by': request.form.get('sort_by'),
+               'limit': request.form.get('num_results')}
+    print(payload)
+    res = requests.get(url, headers=headers, params=payload)
+    json_data = res.json()
+    print(json_data)
 
     # Get user's preferences from form
     cuisine_type = request.form.get('cuisine_type')
-    min_yelp_rating = request.form.get('min_yelp_rating')
+    search_location = request.form.get('search_location')
+    search_term = 'Restaurants'
+    radius = request.form.get('radius')
     min_yelp_price = request.form.get('min_yelp_price')
-    max_distance = request.form.get('max_distance')
-    zipcode = request.form.get('zipcode')
+    sort_by = request.form.get('sort_by')
+    num_results = request.form.get('num_results')
 
     # need to create an instance when they submit the form, then add that instance to the db then commit
     preference = user.preferences
 
     preference = Preference(user_id=user.user_id,
                             cuisine_type=cuisine_type,
-                            min_yelp_rating=min_yelp_rating,
+                            search_location=search_location,
+                            search_term=search_term,
+                            radius=radius,
                             min_yelp_price=min_yelp_price,
-                            max_distance=max_distance,
-                            zipcode=zipcode
+                            sort_by=sort_by,
+                            num_results=num_results
                             )
     
 
@@ -173,29 +152,50 @@ def preferences_form():
 @app.route('/recommendations')
 def restaurant_recommendations():
     """Displays recommendations based on the user's preferences"""
+    user_id = session['user_id']
+    print(user_id)
+    # user_prefs = crud.get_preference_by_user_id(user_id)
 
     # get user's prefs from form data
-    cuisine_type = request.form.get('title')
-    min_yelp_rating = request.form.get('rating')
-    min_yelp_price = request.form.get('price')
-    #max_distance = request.form('max_distance')
-    zipcode = request.form.get('zip_code')
+    # cuisine_type = request.args.get('cuisine_type')
+    # search_location = request.args.get('search_location')
+    # search_term = 'Restaurants'
+    # radius = request.args.get('radius')
+    # min_yelp_price = request.args.get('min_yelp_price')
+    # sort_by = request.args.get('sort_by')
+    # num_results = request.args.get('num_results')
 
-    url = 'https://api.yelp.com/v3/businesses/search'
+    url = 'https://api.yelp.com/v3/businesses/search?'
     headers = {
         "accept": "application/json",
         "Authorization": f"Bearer {API_KEY}"
     }
-    payload = {'title': cuisine_type,
-               'rating': min_yelp_rating,
-               'price': min_yelp_price,
-               'zip_code': int(zipcode)}
-    #check if it expects an int value and not a string for zip code
+    payload = {'location': request.args.get('search_location'),
+               'term': 'Restaurants',
+               'radius': request.args.get('radius'),
+               'categories': request.args.get('cuisine_type'),
+               'price': request.args.get('min_yelp_price'),
+               'sort_by': request.args.get('sort_by'),
+               'limit': request.args.get('num_results')}
+    # payload = {'location': user_id.search_location,
+    #            'term': 'Restaurants',
+    #            'radius': user_id.radius,
+    #            'categories': user_id.cuisine_type,
+    #            'price': user_id.min_yelp_price,
+    #            'sort_by': user_id.sort_by,
+    #            'limit': user_id.num_results}
     
-    response = requests.get(url, headers=headers, params=payload)
-    return response.json()
+    print(payload)
 
+    res = requests.get(url, headers=headers, params=payload)
+    json_data = res.json()
+    print(json_data)
+    recommendations = json_data.get('businesses', [])
     
+    # response = requests.get(url, headers=headers, params=payload)
+    # return response.json()
+    return render_template('recommendations.html', recommendations=recommendations)
+
 
 if __name__ == "__main__":
     connect_to_db(app)
