@@ -90,14 +90,13 @@ def preferences_form():
     user = crud.get_user_by_id(user_id)
     print(user_id)
     print(user)
-    #session["user_id"] = user.user_id
 
     url = "https://api.yelp.com/v3/businesses/search?"
     headers = {
         "accept": "application/json",
         "Authorization": f"Bearer {API_KEY}"
     }
-    print(request.args.get('search_location'))
+    
     #format this payload so that it forms the url query string
     payload = {'location': request.form.get('search_location'),
                'term': 'Restaurants',
@@ -132,69 +131,16 @@ def preferences_form():
                             sort_by=sort_by,
                             num_results=num_results
                             )
-    
+    print(preference)
+    print('!!!!!!!!!!!!!!!!!!!!!')
 
     db.session.add(preference)
-    
-    # preference.cuisine_type = cuisine_type
-    # preference.min_yelp_rating = min_yelp_rating
-    # preference.min_yelp_price = min_yelp_price
-    # preference.max_distance = max_distance
-    # preference.zipcode = zipcode
 
     db.session.commit()
 
     flash ('Preferences submitted successfully!')
-    return redirect('/recommendations')
-
-    #return render_template('preferences_form.html', preference=preference)
-
-@app.route('/recommendations')
-def restaurant_recommendations():
-    """Displays recommendations based on the user's preferences"""
-    user_id = session['user_id']
-    print(user_id)
-    # user_prefs = crud.get_preference_by_user_id(user_id)
-
-    # get user's prefs from form data
-    # cuisine_type = request.args.get('cuisine_type')
-    # search_location = request.args.get('search_location')
-    # search_term = 'Restaurants'
-    # radius = request.args.get('radius')
-    # min_yelp_price = request.args.get('min_yelp_price')
-    # sort_by = request.args.get('sort_by')
-    # num_results = request.args.get('num_results')
-
-    url = 'https://api.yelp.com/v3/businesses/search?'
-    headers = {
-        "accept": "application/json",
-        "Authorization": f"Bearer {API_KEY}"
-    }
-    payload = {'location': request.args.get('search_location'),
-               'term': 'Restaurants',
-               'radius': request.args.get('radius'),
-               'categories': request.args.get('cuisine_type'),
-               'price': request.args.get('min_yelp_price'),
-               'sort_by': request.args.get('sort_by'),
-               'limit': request.args.get('num_results')}
-    # payload = {'location': user_id.search_location,
-    #            'term': 'Restaurants',
-    #            'radius': user_id.radius,
-    #            'categories': user_id.cuisine_type,
-    #            'price': user_id.min_yelp_price,
-    #            'sort_by': user_id.sort_by,
-    #            'limit': user_id.num_results}
-    
-    print(payload)
-
-    res = requests.get(url, headers=headers, params=payload)
-    json_data = res.json()
-    print(json_data)
-    recommendations = json_data.get('businesses', [])
-    
-    # response = requests.get(url, headers=headers, params=payload)
-    # return response.json()
-    return render_template('recommendations.html', recommendations=recommendations)
+    # return redirect('/recommendations')
+    return (json_data)
 
 
 if __name__ == "__main__":
