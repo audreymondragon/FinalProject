@@ -26,10 +26,10 @@ def get_user_by_email(email):
     return User.query.filter(User.email == email).first()
 
 
-def create_preference(user, search_location, search_term, radius, cuisine_type, min_yelp_price, sort_by, num_results):
+def create_preference(user, search_location, search_term, radius, cuisine_type, min_yelp_price, sort_by, num_results, mode_transportation):
     """Create and return a user's preferences"""
 
-    preference = Preference(user=user, search_location=search_location, search_term=search_term, radius=radius, cuisine_type=cuisine_type, min_yelp_price=min_yelp_price, sort_by=sort_by, num_results=num_results)
+    preference = Preference(user=user, search_location=search_location, search_term=search_term, radius=radius, cuisine_type=cuisine_type, min_yelp_price=min_yelp_price, sort_by=sort_by, num_results=num_results, mode_transportation=mode_transportation)
 
     return preference
 

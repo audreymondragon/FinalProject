@@ -36,6 +36,7 @@ class Preference(db.Model):
     min_yelp_price = db.Column(db.Integer)
     sort_by = db.Column(db.String)
     num_results = db.Column(db.Integer)
+    mode_transportation = db.Column(db.String)
 
     user = db.relationship("User", back_populates="preferences")
 

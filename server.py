@@ -12,7 +12,7 @@ app.secret_key = 'dev'
 app.jinja_env.undefined = StrictUndefined
 
 API_KEY = os.environ['YELP_API_KEY']
-#google_maps_api_key = os.environ.get('GOOGLE_MAPS_API_KEY')
+API_KEY_GOOGLE = os.environ['GOOGLE_MAPS_API_KEY']
 cuisines = ["Afghan",  "African",  "American (New)",  "American (Traditional)",  "Andalusian",  "Arabian",  "Argentine",  "Armenian",  "Asian Fusion",  "Asturian",  "Australian",  "Austrian",  "Baguettes",  "Bangladeshi",  "Barbeque",  "Basque",  "Bavarian",  "Beer Garden",  "Beer Hall",  "Beisl",  "Belgian",  "Bistros",  "Black Sea",  "Brasseries",  "Brazilian",  "Breakfast & Brunch",  "British",  "Buffets",  "Bulgarian",  "Burgers",  "Burmese",  "Cafes",  "Cafeteria",  "Cajun/Creole",  "Cambodian",  "Canadian (New)",  "Canteen",  "Caribbean",  "Dominican",  "Haitian",  "Puerto Rican",  "Trinidadian",  "Catalan",  "Cheesesteaks",  "Chicken Shop",  "Chicken Wings",  "Chilean",  "Chinese",  "Comfort Food",  "Corsican",  "Creperies",  "Cuban",  "Curry Sausage",  "Cypriot",  "Czech",  "Czech/Slovakian",  "Danish",  "Delis",  "Diners",  "Dinner Theater",  "Dumplings",  "Eastern European",  "Eritrean",  "Ethiopian",  "Fast Food",  "Filipino",  "Fischbroetchen",  "Fish & Chips",  "Flatbread",  "Fondue",  "Food Court",  "Food Stands",  "Freiduria",  "French",  "Galician",  "Game Meat",  "Gastropubs",  "Georgian",  "German",  "Giblets",  "Gluten-Free",  "Greek",  "Guamanian",  "Halal",  "Hawaiian",  "Heuriger",  "Himalayan/Nepalese",  "Honduran",  "Hong Kong Style Cafe",  "Hot Dogs",  "Hot Pot",  "Hungarian",  "Iberian",  "Indian",  "Indonesian",  "International",  "Irish",  "Island Pub",  "Israeli",  "Italian",  "Japanese",  "Donburi",  "Gyudon",  "Oyakodon",  "Hand Rolls",  "Horumon",  "Izakaya",  "Japanese Curry",  "Kaiseki",  "Kushikatsu",  "Oden",  "Okinawan",  "Okonomiyaki",  "Onigiri",  "Ramen",  "Robatayaki",  "Soba",  "Sukiyaki",  "Takoyaki",  "Tempura",  "Teppanyaki",  "Tonkatsu",  "Udon",  "Unagi",  "Western Style Japanese Food",  "Yakiniku",  "Yakitori",  "Jewish",  "Kebab",  "Kopitiam",  "Korean",  "Kosher",  "Kurdish",  "Laos",  "Laotian",  "Latin American",  "Colombian",  "Salvadoran",  "Venezuelan",  "Live/Raw Food",  "Lyonnais",  "Malaysian",  "Mamak",  "Nyonya",  "Meatballs",  "Mediterranean",  "Falafel",  "Mexican",  "Eastern Mexican",  "Jaliscan",  "Northern Mexican",  "Oaxacan",  "Pueblan",  "Tacos",  "Tamales",  "Yucatan",  "Middle Eastern",  "Egyptian",  "Lebanese",  "Milk Bars",  "Modern Australian",  "Modern European",  "Mongolian",  "Moroccan",  "New Mexican Cuisine",  "New Zealand",  "Nicaraguan",  "Night Food",  "Nikkei",  "Noodles",  "Norcinerie",  "Open Sandwiches",  "Oriental",  "Pakistani",  "Pan Asian",  "Parent Cafes",  "Parma",  "Persian/Iranian",  "Peruvian",  "PF/Comercial",  "Pita",  "Pizza",  "Polish",  "Pierogis",  "Polynesian",  "Pop-Up Restaurants",  "Portuguese",  "Potatoes",  "Poutineries",  "Pub Food",  "Rice",  "Romanian",  "Rotisserie Chicken",  "Russian",  "Salad",  "Sandwiches",  "Scandinavian",  "Schnitzel",  "Scottish",  "Seafood",  "Serbo Croatian",  "Signature Cuisine",  "Singaporean",  "Slovakian",  "Somali",  "Soul Food",  "Soup",  "Southern",  "Spanish",  "Sri Lankan",  "Steakhouses",  "Supper Clubs",  "Sushi Bars",  "Swabian",  "Swedish",  "Swiss Food",  "Syrian",  "Tabernas",  "Taiwanese",  "Tapas Bars",  "Tapas/Small Plates",  "Tavola Calda",  "Tex-Mex",  "Thai",  "Traditional Norwegian",  "Traditional Swedish",  "Trattorie",  "Turkish",  "Ukrainian",  "Uzbek",  "Vegan",  "Vegetarian",  "Venison",  "Vietnamese",  "Waffles",  "Wok",  "Wraps",  "Yugoslav"]
 
 @app.route('/')
@@ -71,7 +71,7 @@ def login_process():
             # think about adding adding username, user_id to the session object here to access everywhere
             #when logging a user out, must also take out all, not just 1
             return redirect('/preferences')
-
+    #why is login not redirecting em to preferences?
     return render_template('login.html')
 
 
@@ -99,9 +99,9 @@ def preferences_form():
     
     #format this payload so that it forms the url query string
     payload = {'location': request.form.get('search_location'),
-               'term': 'Restaurants',
+               'categories': 'Restaurants',
                'radius': request.form.get('radius'),
-               'categories': request.form.get('cuisine_type'),
+               'term': request.form.get('cuisine_type'),
                'price': request.form.get('min_yelp_price'),
                'sort_by': request.form.get('sort_by'),
                'limit': request.form.get('num_results')}
@@ -118,28 +118,52 @@ def preferences_form():
     min_yelp_price = request.form.get('min_yelp_price')
     sort_by = request.form.get('sort_by')
     num_results = request.form.get('num_results')
+    mode_transportation = request.form.get('mode_transportation')
+    # need to add mode so we can use for google maps
 
     # need to create an instance when they submit the form, then add that instance to the db then commit
-    preference = user.preferences
+    #preference = user.preferences
 
-    preference = Preference(user_id=user.user_id,
-                            cuisine_type=cuisine_type,
-                            search_location=search_location,
-                            search_term=search_term,
-                            radius=radius,
-                            min_yelp_price=min_yelp_price,
-                            sort_by=sort_by,
-                            num_results=num_results
-                            )
-    print(preference)
+    #preference = Preference(user_id=user.user_id,
+                            # cuisine_type=cuisine_type,
+                            # search_location=search_location,
+                            # search_term=search_term,
+                            # radius=radius,
+                            # min_yelp_price=min_yelp_price,
+                            # sort_by=sort_by,
+                            # num_results=num_results,
+                            # mode_transportation=mode_transportation
+                            # )
+    #print(preference)
     print('!!!!!!!!!!!!!!!!!!!!!')
 
-    db.session.add(preference)
+    # db.session.add(preference)
 
-    db.session.commit()
+    # db.session.commit()
 
     flash ('Preferences submitted successfully!')
     # return redirect('/recommendations')
+
+    #url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=Washington%2C%20DC&destinations=New%20York%20City%2C%20NY&units=imperial&key=YOUR_API_KEY"
+    url = "https://maps.googleapis.com/maps/api/distancematrix/json?"
+    payload = {'origins': request.form.get('search_location'),
+               'destinations': '1015 3rd Street, Santa Monica CA, 90403',
+                'mode': request.form.get('mode_transportation'),
+                'units': 'imperial',
+                'key': f'{API_KEY_GOOGLE}'
+                }
+    headers = {}
+
+    #need to figure out how to get the display address from restaurants in the destinations
+
+    print(payload)
+    print('^^^^^^^^^^^^^^^^^^^^^^^')
+    response = requests.get(url, headers=headers, params=payload)
+    #maps_json = response.json()
+    print(response)
+    print(response.text)
+    print('+++++++++++++++++++++++')
+
     return (json_data)
 
 
