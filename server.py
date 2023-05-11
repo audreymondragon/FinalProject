@@ -144,7 +144,6 @@ def preferences_form():
     flash ('Preferences submitted successfully!')
     # return redirect('/recommendations')
 
-    #url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=Washington%2C%20DC&destinations=New%20York%20City%2C%20NY&units=imperial&key=YOUR_API_KEY"
     url = "https://maps.googleapis.com/maps/api/distancematrix/json?"
     payload = {'origins': request.form.get('search_location'),
                'destinations': '1015 3rd Street, Santa Monica CA, 90403',
