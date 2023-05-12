@@ -37,7 +37,7 @@ def new_account():
 
         if user:
             flash('That email is already in use, please try again.')
-            return redirect('/create_account')
+            # return redirect('/create_account')
         else:
             # create and add new user to db
             user = crud.create_user(username, email, password)
@@ -50,29 +50,31 @@ def new_account():
     
     return render_template('create_account.html')
 
+@app.route('/login', methods=['GET'])
+def login_page():
+    """Displays the login page"""
 
-@app.route('/login', methods=['GET', 'POST'])
+    return render_template('login.html')
+
+@app.route('/login', methods=['POST'])
 def login_process():
     """Process the user login"""
-    if request.method == 'POST':
-        email = request.form.get("email")
-        password = request.form.get("password")
+    email = request.form.get("email")
+    password = request.form.get("password")
 
-        # if user exists
-        user = crud.get_user_by_email(email)
+    # if user exists
+    user = crud.get_user_by_email(email)
    
-        if not user or user.password != password:
-            flash("The email or password you entered was incorrect.")
-        else:
-            session["user_email"] = user.email
-            session["user_id"] = user.user_id
-            session["username"] = user.username
-            flash(f"Welcome, {user.username}!")
-            # think about adding adding username, user_id to the session object here to access everywhere
-            #when logging a user out, must also take out all, not just 1
-            return redirect('/preferences')
-    #why is login not redirecting em to preferences?
-    return render_template('login.html')
+    if not user or user.password != password:
+        flash("The email or password you entered was incorrect.")
+    else:
+        session["user_email"] = user.email
+        session["user_id"] = user.user_id
+        session["username"] = user.username
+        flash(f"Welcome, {user.username}!")
+        # think about adding adding username, user_id to the session object here to access everywhere
+        #when logging a user out, must also take out all, not just 1
+    return redirect('/preferences')
 
 
 @app.route('/preferences', methods=['GET'])
@@ -144,27 +146,46 @@ def preferences_form():
     flash ('Preferences submitted successfully!')
     # return redirect('/recommendations')
 
-    url = "https://maps.googleapis.com/maps/api/distancematrix/json?"
-    payload = {'origins': request.form.get('search_location'),
-               'destinations': '1015 3rd Street, Santa Monica CA, 90403',
-                'mode': request.form.get('mode_transportation'),
-                'units': 'imperial',
-                'key': f'{API_KEY_GOOGLE}'
-                }
-    headers = {}
+    for business in json_data['businesses']:
+        addresses = business['location']['display_address']
+    
+        url = "https://maps.googleapis.com/maps/api/distancematrix/json?"
+        payload = {'origins': request.form.get('search_location'),
+                   'destinations': addresses,
+                   'mode': request.form.get('mode_transportation'),
+                   'units': 'imperial',
+                   'key': f'{API_KEY_GOOGLE}'
+                   }
+        headers = {}
 
-    #need to figure out how to get the display address from restaurants in the destinations
+        print(payload)
+        print('^^^^^^^^^^^^^^^^^^^^^^^')
+        response = requests.get(url, headers=headers, params=payload)
+        # print(response)
+        data = response.json()
+        print(response.json())
+        try:
+            distance_data = data["rows"][0]['elements'][0]
+        
+            print('+++++++++++++++++++++++')
+            # distance_data = response.json()
+            business['distance_data'] = distance_data
+        except:
+            business['distance_data'] = None
 
-    print(payload)
-    print('^^^^^^^^^^^^^^^^^^^^^^^')
-    response = requests.get(url, headers=headers, params=payload)
-    #maps_json = response.json()
-    print(response)
-    print(response.text)
-    print('+++++++++++++++++++++++')
+    print(json_data)
+    return json_data
+# travel time added to json data key value pair to make it easier to display on page
 
-    return (json_data)
+@app.route('/logout')
+def logout():
+    """Logs out user"""
 
+    session.pop('user_email', None)
+    session.pop('user_id', None)
+    session.pop('username', None)
+    flash('You have been logged out.')
+    return redirect('/')
 
 if __name__ == "__main__":
     connect_to_db(app)
