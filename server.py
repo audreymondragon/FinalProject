@@ -1,9 +1,10 @@
 """Server for movie ratings app."""
-from flask import (Flask, render_template, request, flash, session, redirect)
+from flask import (Flask, render_template, request, flash, session, redirect, jsonify)
 import requests
 from model import connect_to_db, db, User, Preference
 import crud
 import os
+import json
 
 from jinja2 import StrictUndefined
 
@@ -37,7 +38,7 @@ def new_account():
 
         if user:
             flash('That email is already in use, please try again.')
-            # return redirect('/create_account')
+            return redirect('/create_account')
         else:
             # create and add new user to db
             user = crud.create_user(username, email, password)
@@ -68,18 +69,20 @@ def login_process():
     if not user or user.password != password:
         flash("The email or password you entered was incorrect.")
     else:
-        session["user_email"] = user.email
+        session["email"] = user.email
         session["user_id"] = user.user_id
         session["username"] = user.username
-        flash(f"Welcome, {user.username}!")
-        # think about adding adding username, user_id to the session object here to access everywhere
-        #when logging a user out, must also take out all, not just 1
+        #flash(f"Welcome, {user.username}!")
     return redirect('/preferences')
 
 
 @app.route('/preferences', methods=['GET'])
 def preferences():
     """Displays the page to enter user preferences in the form"""
+    logged_in_email = session.get("email")
+
+    if logged_in_email is None:
+        flash("You must be logged in to view restaurant recommendations.")
 
     return render_template('preferences_form.html', cuisines=cuisines)
 
@@ -90,8 +93,6 @@ def preferences_form():
     #retrieve user object from session
     user_id = session['user_id']
     user = crud.get_user_by_id(user_id)
-    print(user_id)
-    print(user)
 
     url = "https://api.yelp.com/v3/businesses/search?"
     headers = {
@@ -107,44 +108,11 @@ def preferences_form():
                'price': request.form.get('min_yelp_price'),
                'sort_by': request.form.get('sort_by'),
                'limit': request.form.get('num_results')}
-    print(payload)
+    
     res = requests.get(url, headers=headers, params=payload)
     json_data = res.json()
-    print(json_data)
-
-    # Get user's preferences from form
-    cuisine_type = request.form.get('cuisine_type')
-    search_location = request.form.get('search_location')
-    search_term = 'Restaurants'
-    radius = request.form.get('radius')
-    min_yelp_price = request.form.get('min_yelp_price')
-    sort_by = request.form.get('sort_by')
-    num_results = request.form.get('num_results')
-    mode_transportation = request.form.get('mode_transportation')
-    # need to add mode so we can use for google maps
-
-    # need to create an instance when they submit the form, then add that instance to the db then commit
-    #preference = user.preferences
-
-    #preference = Preference(user_id=user.user_id,
-                            # cuisine_type=cuisine_type,
-                            # search_location=search_location,
-                            # search_term=search_term,
-                            # radius=radius,
-                            # min_yelp_price=min_yelp_price,
-                            # sort_by=sort_by,
-                            # num_results=num_results,
-                            # mode_transportation=mode_transportation
-                            # )
-    #print(preference)
-    print('!!!!!!!!!!!!!!!!!!!!!')
-
-    # db.session.add(preference)
-
-    # db.session.commit()
-
-    flash ('Preferences submitted successfully!')
-    # return redirect('/recommendations')
+    print(len(json_data['businesses']))
+    #flash ('Preferences submitted successfully!')
 
     for business in json_data['businesses']:
         addresses = business['location']['display_address']
@@ -158,24 +126,30 @@ def preferences_form():
                    }
         headers = {}
 
-        print(payload)
-        print('^^^^^^^^^^^^^^^^^^^^^^^')
         response = requests.get(url, headers=headers, params=payload)
-        # print(response)
         data = response.json()
-        print(response.json())
+        
         try:
             distance_data = data["rows"][0]['elements'][0]
-        
-            print('+++++++++++++++++++++++')
-            # distance_data = response.json()
+            print(distance_data)
             business['distance_data'] = distance_data
         except:
+            print('except block')
             business['distance_data'] = None
 
-    print(json_data)
     return json_data
-# travel time added to json data key value pair to make it easier to display on page
+
+@app.route('/geocode', methods=['POST'])
+def geocode():
+    address = request.form.get("search_location")
+
+    geocoding_url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={API_KEY_GOOGLE}"
+
+    response = requests.get(geocoding_url)
+    data = response.json()
+
+    user_location = data['results'][0]['geometry']['location']
+    return jsonify(user_location)
 
 @app.route('/logout')
 def logout():
